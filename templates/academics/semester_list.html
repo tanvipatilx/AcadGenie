@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Semesters – AcadGenie{% endblock %}
+{% block nav_semesters %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Semesters</h5>
+  <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">← Dashboard</a>
+</div>
+
+{# ── Add semester form ────────────────────────────────────────────────────── #}
+<div class="card shadow-sm mb-4">
+  <div class="card-header">Add Semester</div>
+  <div class="card-body">
+    {% if sem_error %}
+      <div class="alert alert-danger py-2">{{ sem_error }}</div>
+    {% endif %}
+    <form method="post" action="{% url 'semester_create_html' %}" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-auto">
+        <label class="form-label small">Semester No.</label>
+        <input type="number" name="semester_number" min="1" max="12"
+               class="form-control form-control-sm" style="width:110px" required>
+      </div>
+      <div class="col-auto">
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" name="is_completed" id="isCompleted">
+          <label class="form-check-label small" for="isCompleted">Mark as completed</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Semester list ─────────────────────────────────────────────────────────── #}
+{% if semesters %}
+<table class="table table-hover shadow-sm bg-white rounded">
+  <thead class="table-light">
+    <tr>
+      <th>Semester</th>
+      <th class="text-center">SGPA</th>
+      <th class="text-center">Status</th>
+      <th class="text-center">Subjects</th>
+      <th class="text-center">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for sem in semesters %}
+    <tr>
+      <td>Semester {{ sem.semester_number }}</td>
+      <td class="text-center">{{ sem.sgpa|default:"—" }}</td>
+      <td class="text-center">
+        {% if sem.is_completed %}
+          <span class="badge bg-success">Completed</span>
+        {% else %}
+          <span class="badge bg-warning text-dark">In Progress</span>
+        {% endif %}
+      </td>
+      <td class="text-center">{{ sem.subjects.count }}</td>
+      <td class="text-center d-flex gap-1 justify-content-center">
+        <a href="{% url 'subject_list_html' sem.id %}" class="btn btn-sm btn-outline-primary">Subjects</a>
+        <a href="{% url 'semester_edit_html' sem.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+        <form method="post" action="{% url 'semester_delete_html' sem.id %}"
+              onsubmit="return confirm('Delete Semester {{ sem.semester_number }} and all its subjects?')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No semesters yet. Add your first one above.</div>
+{% endif %}
+{% endblock %}

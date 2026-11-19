@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Edit Resource – AcadGenie{% endblock %}
+{% block nav_resources %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a href="{% url 'resource_hub_html' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h5 class="fw-bold mb-0" style="color:#1e1e2e">Edit Resource</h5>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-body p-4">
+
+        {% if error %}
+          <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" required
+                   value="{{ resource.title }}">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Resource Type <span class="text-danger">*</span></label>
+              <select name="resource_type" class="form-select" required>
+                {% for val, label in resource_types %}
+                <option value="{{ val }}"
+                    {% if resource.resource_type == val %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
+              <select name="subject" class="form-select" required>
+                {% for subj in all_subjects %}
+                <option value="{{ subj.id }}"
+                    {% if resource.subject.id == subj.id %}selected{% endif %}>
+                    Sem {{ subj.semester.semester_number }} – {{ subj.code }} {{ subj.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description
+              <span class="text-muted fw-normal small">(optional)</span>
+            </label>
+            <textarea name="description" class="form-control" rows="3">{{ resource.description }}</textarea>
+          </div>
+
+          {# Current file / URL status #}
+          {% if resource.file %}
+          <div class="alert alert-light border py-2 mb-3" style="font-size:.85rem">
+            <i class="bi bi-file-earmark-check text-success me-1"></i>
+            Current file:
+            <a href="{{ resource.file.url }}" target="_blank" rel="noopener">
+              {{ resource.file.name|slice:"10:" }}
+            </a>
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox" name="clear_file" id="clearFile">
+              <label class="form-check-label small text-danger" for="clearFile">Remove this file</label>
+            </div>
+          </div>
+          {% elif resource.url %}
+          <div class="alert alert-light border py-2 mb-3" style="font-size:.85rem">
+            <i class="bi bi-link-45deg text-primary me-1"></i>
+            Current URL: <a href="{{ resource.url }}" target="_blank" rel="noopener">{{ resource.url|truncatechars:60 }}</a>
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Replace with new file
+              <span class="text-muted fw-normal small">(optional)</span>
+            </label>
+            <input type="file" name="file" class="form-control"
+                   accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Or replace with URL
+              <span class="text-muted fw-normal small">(optional)</span>
+            </label>
+            <input type="url" name="url" class="form-control"
+                   placeholder="https://…"
+                   value="{{ resource.url|default:'' }}">
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-floppy me-1"></i>Save Changes
+            </button>
+            <a href="{% url 'resource_hub_html' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

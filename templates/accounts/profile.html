@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Profile – AcadGenie{% endblock %}
+{% block nav_profile %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-sm-10 col-md-7 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header"><strong>My Profile</strong></div>
+      <div class="card-body p-4">
+
+        {% if success %}
+          <div class="alert alert-success py-2">Profile updated successfully.</div>
+        {% endif %}
+        {% if error %}
+          <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label text-muted small">Username</label>
+          <p class="fw-semibold mb-0">{{ profile.user.username }}</p>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted small">Email</label>
+          <p class="mb-0">{{ profile.user.email|default:"—" }}</p>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted small">Enrollment No.</label>
+          <p class="mb-0">{{ profile.enrollment_no }}</p>
+        </div>
+        <hr>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Branch / Programme</label>
+            <input type="text" name="branch" class="form-control"
+                   value="{{ profile.branch }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Current Semester</label>
+            <input type="number" name="current_semester" class="form-control"
+                   min="1" max="12" value="{{ profile.current_semester }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Target CGPA <span class="text-muted small">(0–10, optional)</span></label>
+            <input type="number" name="target_cgpa" class="form-control"
+                   step="0.01" min="0" max="10"
+                   value="{{ profile.target_cgpa|default:'' }}">
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

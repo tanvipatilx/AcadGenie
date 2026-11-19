@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Register – AcadGenie{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-sm-10 col-md-6 col-lg-5">
+    <div class="card shadow-sm mt-4">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center">Create Account</h4>
+
+        {% if error %}
+          <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" autofocus required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email <span class="text-muted small">(optional)</span></label>
+            <input type="email" name="email" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password <span class="text-muted small">(min 8 chars)</span></label>
+            <input type="password" name="password" class="form-control" minlength="8" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Enrollment No.</label>
+            <input type="text" name="enrollment_no" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Branch / Programme</label>
+            <input type="text" name="branch" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+
+        <div class="text-center mt-3 small">
+          Already have an account? <a href="{% url 'login_html' %}">Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

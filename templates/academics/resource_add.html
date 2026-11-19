@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Add Resource – AcadGenie{% endblock %}
+{% block nav_resources %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a href="{% url 'resource_hub_html' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h5 class="fw-bold mb-0" style="color:#1e1e2e">Add Resource</h5>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-body p-4">
+
+        {% if error %}
+          <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" autofocus required
+                   placeholder="e.g. Unit 2 Notes, 2023 Question Paper…">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Resource Type <span class="text-danger">*</span></label>
+              <select name="resource_type" class="form-select" required>
+                <option value="">— Select type —</option>
+                {% for val, label in resource_types %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
+              <select name="subject" class="form-select" required>
+                <option value="">— Select subject —</option>
+                {% for subj in all_subjects %}
+                <option value="{{ subj.id }}"
+                    {% if preselected_subject == subj.id|stringformat:"s" %}selected{% endif %}>
+                    Sem {{ subj.semester.semester_number }} – {{ subj.code }} {{ subj.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description
+              <span class="text-muted fw-normal small">(optional)</span>
+            </label>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="Short description of this resource…"></textarea>
+          </div>
+
+          {# File vs URL — toggle via JS #}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Upload Type <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="upload_type"
+                       id="typeFile" value="file" checked onchange="toggleUpload(this.value)">
+                <label class="form-check-label" for="typeFile">
+                  <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload File
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="upload_type"
+                       id="typeUrl" value="url" onchange="toggleUpload(this.value)">
+                <label class="form-check-label" for="typeUrl">
+                  <i class="bi bi-link-45deg me-1"></i>External URL
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div id="fileField" class="mb-3">
+            <label class="form-label fw-semibold">File</label>
+            <input type="file" name="file" class="form-control"
+                   accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg">
+            <div class="form-text">PDF, Word, PPT, images, or plain text.</div>
+          </div>
+
+          <div id="urlField" class="mb-3" style="display:none">
+            <label class="form-label fw-semibold">URL</label>
+            <input type="url" name="url" class="form-control"
+                   placeholder="https://…">
+            <div class="form-text">Paste a YouTube link, Google Drive link, or any URL.</div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-plus-circle me-1"></i>Add Resource
+            </button>
+            <a href="{% url 'resource_hub_html' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleUpload(val) {
+    document.getElementById('fileField').style.display = val === 'file' ? '' : 'none';
+    document.getElementById('urlField').style.display  = val === 'url'  ? '' : 'none';
+}
+// Pre-select URL tab if resource type is YouTube
+document.querySelector('select[name="resource_type"]').addEventListener('change', function () {
+    if (this.value === 'youtube') {
+        document.getElementById('typeUrl').checked = true;
+        toggleUpload('url');
+    }
+});
+</script>
+{% endblock %}

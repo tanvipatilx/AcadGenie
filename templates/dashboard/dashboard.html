@@ -1,0 +1,672 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – AcadGenie{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{# ════════════ SEMESTER DETAILS → LEFT SIDEBAR ════════════════════════════ #}
+{% block sidebar_semester_details %}
+{% if semesters %}
+<div class="sb-sem-details">
+    <div class="sb-section-label">Semester Details</div>
+
+    {% for sem in semesters %}
+    <a href="{% url 'subject_list_html' sem.id %}" class="sb-sem-link">
+        <span class="sb-sem-title">
+            Sem {{ sem.semester_number }}
+            {% if sem.is_completed %}
+                <i class="bi bi-check-circle-fill sb-done-icon"></i>
+            {% endif %}
+        </span>
+        <span class="sgpa-badge">{{ sem.sgpa|default:"—" }}</span>
+    </a>
+    {% endfor %}
+
+</div>
+{% endif %}
+{% endblock %}
+
+{# ════════════════════════════ MAIN CONTENT ═══════════════════════════════ #}
+{% block content %}
+
+{# ── Welcome header ───────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-0 page-heading">
+            Welcome back, {{ profile.user.username }}
+        </h5>
+        <small class="text-muted">{{ profile.branch }} &nbsp;·&nbsp; Sem {{ profile.current_semester }}</small>
+    </div>
+    <a href="{% url 'semester_list_html' %}" class="btn btn-sm btn-primary px-3">
+        <i class="bi bi-plus-circle me-1"></i> Manage Semesters
+    </a>
+</div>
+
+{# ── Stat tiles ────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile blue">
+            <div class="label">
+                CGPA
+                {% if cgpa and cgpa >= 8 %}
+                <span class="badge-highlight">Top achievement</span>
+                {% endif %}
+            </div>
+            <div class="value hero-cgpa" data-count="{{ cgpa|default:'' }}">{{ cgpa|default:"—" }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile green">
+            <div class="label">Credits Earned</div>
+            <div class="value" data-count="{{ total_credits_earned }}">{{ total_credits_earned }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile orange">
+            <div class="label">Sems Completed</div>
+            <div class="value" data-count="{% with completed=semesters|length %}{{ completed }}{% endwith %}">
+                {% with completed=semesters|length %}{{ completed }}{% endwith %}
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-tile purple">
+            <div class="label">Target CGPA</div>
+            <div class="value" data-count="{{ profile.target_cgpa|default:'' }}">{{ profile.target_cgpa|default:"—" }}</div>
+        </div>
+    </div>
+</div>
+
+{# ── Speedometer + Donut row ───────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+
+    {# CGPA Speedometer #}
+    <div class="col-12 col-md-6">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100 text-center">
+            <h6 class="fw-semibold mb-1">
+                <i class="bi bi-speedometer2 text-primary me-2"></i>CGPA Gauge
+            </h6>
+            <p class="text-muted mb-3" style="font-size:.75rem">
+                Current vs Target ({{ profile.target_cgpa|default:"10.0" }})
+            </p>
+            {% if cgpa %}
+            <div class="chart-wrap" style="width:220px;margin:0 auto">
+                <div class="chart-skeleton" aria-hidden="true"></div>
+                <canvas id="gaugeChart" width="220" height="120"></canvas>
+                <div id="gaugeLabel" style="
+                    position:absolute;
+                    bottom:4px;left:50%;transform:translateX(-50%);
+                    font-family:Manrope,Inter,sans-serif;
+                    font-size:1.6rem;font-weight:800;color:var(--text);
+                    line-height:1;pointer-events:none">
+                    {{ cgpa }}
+                </div>
+            </div>
+            <div class="d-flex justify-content-between px-4 mt-1" style="font-size:.72rem;color:var(--text-faint)">
+                <span>0</span><span>5</span><span>10</span>
+            </div>
+            {% else %}
+            <div class="empty-state py-3">
+                <i class="bi bi-speedometer2"></i>
+                <p>No CGPA yet</p>
+                <span>Complete a semester to fill the gauge.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Grade Distribution Donut #}
+    <div class="col-12 col-md-6">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100 text-center">
+            <h6 class="fw-semibold mb-1">
+                <i class="bi bi-pie-chart-fill text-primary me-2"></i>Grade Distribution
+            </h6>
+            <p class="text-muted mb-3" style="font-size:.75rem">All graded subjects</p>
+            {% if grade_dist %}
+            <div class="chart-wrap" style="width:180px;margin:0 auto">
+                <div class="chart-skeleton" aria-hidden="true"></div>
+                <canvas id="donutChart" width="180" height="180"></canvas>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-pie-chart"></i>
+                <p>No grades to show</p>
+                <span>Add subject marks and they’ll appear here.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{# ── Semester-wise progress bars ───────────────────────────────────────── #}
+<div class="card shadow-sm border-0 rounded-3 mb-4 p-3" id="charts">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-semibold mb-0">
+            <i class="bi bi-bar-chart-steps text-primary me-2"></i>Semester Progress
+        </h6>
+    </div>
+    {% for sem in semesters %}
+    <div class="sem-row">
+        <div class="sem-label">
+            <span>
+                Semester {{ sem.semester_number }}
+                {% if sem.is_completed %}
+                    <span class="badge bg-success ms-1" style="font-size:.65rem">Done</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">Active</span>
+                {% endif %}
+            </span>
+            <span class="{% if sem.sgpa %}{% if sem.sgpa >= 8 %}is-good{% elif sem.sgpa >= 5 %}is-warn{% else %}is-risk{% endif %}{% endif %}">SGPA {{ sem.sgpa|default:"—" }}</span>
+        </div>
+        <div class="progress">
+            {% if sem.sgpa %}
+                {% widthratio sem.sgpa 10 100 as pct %}
+                <div class="progress-bar {% if sem.sgpa >= 8 %}is-good{% elif sem.sgpa >= 5 %}is-warn{% else %}is-risk{% endif %}"
+                     style="width:{{ pct }}%"></div>
+            {% else %}
+                <div class="progress-bar" style="width:2%;opacity:.25"></div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="bi bi-layers"></i>
+        <p>No semesters yet</p>
+        <span><a href="{% url 'semester_list_html' %}">Add your first semester</a> to start tracking progress.</span>
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Charts ────────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100">
+            <h6 class="fw-semibold mb-3">
+                <i class="bi bi-graph-up text-primary me-2"></i>SGPA / CGPA Progression
+            </h6>
+            {% if chart_labels %}
+            <div class="chart-wrap">
+                <div class="chart-skeleton" aria-hidden="true"></div>
+                <canvas id="progressionChart" height="180"></canvas>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-graph-up"></i>
+                <p>No trend yet</p>
+                <span>Finish a semester to see SGPA and CGPA over time.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0 rounded-3 p-3 h-100">
+            <h6 class="fw-semibold mb-3">
+                <i class="bi bi-percent text-primary me-2"></i>Avg % per Semester
+            </h6>
+            {% if chart_labels %}
+            <div class="chart-wrap">
+                <div class="chart-skeleton" aria-hidden="true"></div>
+                <canvas id="percentageChart" height="180"></canvas>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-percent"></i>
+                <p>No averages yet</p>
+                <span>Marks from completed semesters will show here.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-3 p-3 mb-4">
+    <h6 class="fw-semibold mb-3">
+        <i class="bi bi-bookmarks text-primary me-2"></i>Subject Grade Points
+        {% if current_sem %}
+            <span class="badge ms-1" style="background:var(--accent-muted);color:var(--primary);font-weight:600">Sem {{ current_sem.semester_number }}</span>
+        {% endif %}
+    </h6>
+    {% if subj_chart_labels %}
+    <div class="chart-wrap">
+        <div class="chart-skeleton" aria-hidden="true"></div>
+        <canvas id="subjectChart" height="90"></canvas>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-bookmarks"></i>
+        <p>No subject scores yet</p>
+        <span>Add subjects and grade points to compare them here.</span>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+
+{# ════════════════════════════ RIGHT PANEL ════════════════════════════════ #}
+{% block right_panel %}
+<aside class="right-panel">
+
+    {# ── CGPA Target Calculator ─────────────────────────────── #}
+    <div class="panel-card" id="target-calc">
+        <h6><i class="bi bi-bullseye me-1"></i> CGPA Target Calculator</h6>
+        <form method="post" action="{% url 'target_calculator_html' %}">
+            {% csrf_token %}
+            <div class="mb-2">
+                <label class="form-label" style="font-size:.78rem">Target CGPA (0–10)</label>
+                <input type="number" name="target_cgpa" step="0.01" min="0" max="10"
+                       class="form-control form-control-sm"
+                       value="{{ profile.target_cgpa|default:'' }}" required>
+            </div>
+            <div class="mb-2">
+                <label class="form-label" style="font-size:.78rem">Total Semesters</label>
+                <input type="number" name="total_semesters" min="1" max="12"
+                       class="form-control form-control-sm" value="8">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm w-100">Calculate</button>
+        </form>
+
+        {% if target_result %}
+        <div class="mt-3">
+            {% if target_result.error %}
+                <div class="alert alert-warning py-2 mb-0" style="font-size:.78rem">
+                    {{ target_result.error }}
+                </div>
+            {% else %}
+            <div class="d-flex flex-column gap-2 mt-2">
+                <div class="d-flex justify-content-between" style="font-size:.8rem">
+                    <span class="text-muted">Current CGPA</span>
+                    <strong>{{ target_result.current_cgpa|default:"—" }}</strong>
+                </div>
+                <div class="d-flex justify-content-between" style="font-size:.8rem">
+                    <span class="text-muted">Sems Remaining</span>
+                    <strong>{{ target_result.remaining_semesters }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center" style="font-size:.8rem">
+                    <span class="text-muted">Req. SGPA / Sem</span>
+                    <span class="badge {% if target_result.achievable %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ target_result.required_sgpa_per_remaining_semester }}
+                        {% if not target_result.achievable %} ✗{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Study Resources ────────────────────────────────────── #}
+    <div class="panel-card">
+        <h6><i class="bi bi-journal-richtext me-1"></i> Study Resources</h6>
+        <a href="{% url 'resource_hub_html' %}" class="resource-link featured">
+            <i class="bi bi-collection-fill"></i>
+            <span class="fw-semibold">My Resource Hub</span>
+            <i class="bi bi-arrow-right ms-auto" style="font-size:.75rem"></i>
+        </a>
+        <a href="https://nptel.ac.in/" target="_blank" rel="noopener" class="resource-link">
+            <i class="bi bi-play-btn"></i>
+            <span>NPTEL Courses</span>
+            <i class="bi bi-arrow-up-right ms-auto" style="font-size:.75rem;color:var(--text-faint)"></i>
+        </a>
+        <a href="https://swayam.gov.in/" target="_blank" rel="noopener" class="resource-link">
+            <i class="bi bi-book"></i>
+            <span>Swayam Portal</span>
+            <i class="bi bi-arrow-up-right ms-auto" style="font-size:.75rem;color:var(--text-faint)"></i>
+        </a>
+        <a href="https://www.coursera.org/" target="_blank" rel="noopener" class="resource-link">
+            <i class="bi bi-globe"></i>
+            <span>Coursera</span>
+            <i class="bi bi-arrow-up-right ms-auto" style="font-size:.75rem;color:var(--text-faint)"></i>
+        </a>
+        <a href="https://ocw.mit.edu/" target="_blank" rel="noopener" class="resource-link">
+            <i class="bi bi-mortarboard"></i>
+            <span>MIT OpenCourseWare</span>
+            <i class="bi bi-arrow-up-right ms-auto" style="font-size:.75rem;color:var(--text-faint)"></i>
+        </a>
+        <a href="https://scholar.google.com/" target="_blank" rel="noopener" class="resource-link">
+            <i class="bi bi-search"></i>
+            <span>Google Scholar</span>
+            <i class="bi bi-arrow-up-right ms-auto" style="font-size:.75rem;color:var(--text-faint)"></i>
+        </a>
+    </div>
+
+    {# ── Notes Sharing ──────────────────────────────────────── #}
+    <div class="panel-card">
+        <h6><i class="bi bi-pencil-square me-1"></i> Quick Notes</h6>
+        <p class="text-muted" style="font-size:.78rem; margin-bottom:10px">
+            Jot down a quick study note or reminder.
+        </p>
+        <textarea id="quickNote" class="form-control form-control-sm"
+                  rows="3" placeholder="Type a note…"
+                  style="font-size:.82rem; resize:none"></textarea>
+        <button onclick="saveNote()" class="btn btn-outline-primary btn-sm w-100 mt-2">
+            <i class="bi bi-floppy me-1"></i> Save Locally
+        </button>
+        <div id="savedNotes" class="mt-2"></div>
+    </div>
+
+</aside>
+{% endblock %}
+
+
+{# ════════════════════════════ CHART JS ══════════════════════════════════ #}
+{% block extra_js %}
+{# json_script MUST live inside a block — child templates discard anything else #}
+{{ chart_labels|json_script:"data-chart-labels" }}
+{{ chart_sgpa|json_script:"data-chart-sgpa" }}
+{{ running_cgpa|json_script:"data-running-cgpa" }}
+{{ chart_percentage|json_script:"data-chart-pct" }}
+{{ subj_chart_labels|json_script:"data-subj-labels" }}
+{{ subj_chart_grade_points|json_script:"data-subj-gp" }}
+{{ gauge_current|json_script:"data-gauge-current" }}
+{{ gauge_target|json_script:"data-gauge-target" }}
+{{ grade_dist|json_script:"data-grade-dist" }}
+
+<script>
+const PRIMARY  = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2438A8';
+const POSITIVE = getComputedStyle(document.documentElement).getPropertyValue('--positive').trim() || '#17B6A7';
+const WARNING  = getComputedStyle(document.documentElement).getPropertyValue('--warning').trim() || '#F5A623';
+const DANGER   = getComputedStyle(document.documentElement).getPropertyValue('--danger').trim() || '#E5484D';
+const TRACK    = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#E5E7F3';
+const SURFACE  = getComputedStyle(document.documentElement).getPropertyValue('--card').trim() || '#ffffff';
+
+function jd(id) {
+    const el = document.getElementById(id);
+    return el ? JSON.parse(el.textContent) : null;
+}
+function readyChart(canvas) {
+    canvas?.closest('.chart-wrap')?.classList.add('is-ready');
+}
+
+if (window.Chart) {
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.color = '#6b7280';
+}
+
+function animateCounts() {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('[data-count]').forEach(el => {
+        const raw = (el.dataset.count || '').trim();
+        if (raw === '') { el.textContent = '—'; return; }
+        const target = Number(raw);
+        if (Number.isNaN(target)) { el.textContent = raw; return; }
+        const decimals = (raw.split('.')[1] || '').length;
+        if (reduce) { el.textContent = target.toFixed(decimals); return; }
+        const duration = 900;
+        const start = performance.now();
+        function frame(now) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = (target * eased).toFixed(decimals);
+            if (t < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    });
+}
+animateCounts();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 1. CGPA SPEEDOMETER GAUGE (half-circle doughnut)
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+    const canvas = document.getElementById('gaugeChart');
+    if (!canvas) return;
+
+    const current = Number(jd('data-gauge-current') ?? 0);
+    const target  = Number(jd('data-gauge-target')  ?? 10);
+    const max     = 10;
+
+    // Chart.js v4 already draws only `circumference` degrees, so two slices
+    // (value + remainder) fill the semicircle. A third "hidden half" slice
+    // would eat half the visible arc (and 0/NaN current looks like a gray track).
+    const filled = Math.min(Math.max(current, 0), max);
+    const rest   = max - filled;
+
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [filled, rest],
+                backgroundColor: [PRIMARY, TRACK],
+                borderWidth: 0,
+                borderRadius: [6, 0],
+            }]
+        },
+        options: {
+            rotation: 270,          // start at 9 o'clock
+            circumference: 180,     // half-circle (degrees in Chart.js 3+)
+            cutout: '72%',
+            plugins: {
+                legend:  { display: false },
+                tooltip: { enabled: false },
+            },
+            animation: { duration: 900, easing: 'easeOutQuart' },
+        },
+    });
+    readyChart(canvas);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. GRADE DISTRIBUTION DONUT
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+    const canvas = document.getElementById('donutChart');
+    if (!canvas) return;
+
+    const dist = jd('data-grade-dist');
+    if (!dist || !Object.keys(dist).length) return;
+
+    // Canonical grade order — service already filters to present grades only
+    const GRADE_COLORS = {
+        'O':  POSITIVE,
+        'A+': '#3cc8bb',
+        'A':  '#7dd9d0',
+        'B+': WARNING,
+        'B':  '#f7bc5c',
+        'C':  DANGER,
+        'F':  '#ef7a7e',
+    };
+
+    const labels = Object.keys(dist);
+    const values = Object.values(dist);
+    const colors = labels.map(g => GRADE_COLORS[g] ?? '#94a3b8');
+
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: SURFACE,
+                hoverOffset: 6,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 10,
+                        padding: 10,
+                        font: { size: 11 },
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed} subject${ctx.parsed !== 1 ? 's' : ''}`
+                    }
+                }
+            },
+            animation: { duration: 800, easing: 'easeOutQuart' },
+        },
+    });
+    readyChart(canvas);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 3. SGPA / CGPA PROGRESSION LINE CHART
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+    const canvas = document.getElementById('progressionChart');
+    if (!canvas) return;
+
+    const labels   = jd('data-chart-labels') ?? [];
+    const sgpaData = jd('data-chart-sgpa')   ?? [];
+    const cgpaData = jd('data-running-cgpa') ?? [];
+    if (!labels.length) return;
+
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'SGPA',
+                    data: sgpaData,
+                    borderColor: PRIMARY,
+                    backgroundColor: 'rgba(36,56,168,.12)',
+                    fill: true, tension: .35, pointRadius: 5,
+                },
+                {
+                    label: 'CGPA',
+                    data: cgpaData,
+                    borderColor: POSITIVE,
+                    backgroundColor: 'rgba(16,185,129,.08)',
+                    fill: false, tension: .35,
+                    borderDash: [6, 3], pointRadius: 4,
+                }
+            ]
+        },
+        options: {
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+            scales:  { y: { min: 0, max: 10, ticks: { stepSize: 2 }, grid: { color: TRACK } } }
+        }
+    });
+    readyChart(canvas);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 4. AVG % BAR CHART
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+    const canvas = document.getElementById('percentageChart');
+    if (!canvas) return;
+
+    const labels  = jd('data-chart-labels') ?? [];
+    const pctData = jd('data-chart-pct')    ?? [];
+    if (!labels.length) return;
+
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Avg %',
+                data: pctData,
+                backgroundColor: 'rgba(36,56,168,.75)',
+                borderColor: PRIMARY,
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales:  { y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: TRACK } } }
+        }
+    });
+    readyChart(canvas);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. SUBJECT GRADE-POINT BAR CHART
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+    const canvas = document.getElementById('subjectChart');
+    if (!canvas) return;
+
+    const labels = jd('data-subj-labels') ?? [];
+    const gp     = jd('data-subj-gp')     ?? [];
+    if (!labels.length) return;
+
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Grade Point',
+                data: gp,
+                backgroundColor: gp.map(v =>
+                    v >= 9 ? POSITIVE :
+                    v >= 7 ? PRIMARY :
+                    v >= 5 ? WARNING : DANGER
+                ),
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales:  { y: { min: 0, max: 10, ticks: { stepSize: 2 }, grid: { color: TRACK } } }
+        }
+    });
+    readyChart(canvas);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 6. QUICK NOTES (localStorage)
+// ══════════════════════════════════════════════════════════════════════════════
+function saveNote() {
+    const txt = document.getElementById('quickNote').value.trim();
+    if (!txt) return;
+    const notes = JSON.parse(localStorage.getItem('acadgenie_notes') || '[]');
+    notes.unshift({ text: txt, ts: new Date().toLocaleString() });
+    localStorage.setItem('acadgenie_notes', JSON.stringify(notes.slice(0, 10)));
+    document.getElementById('quickNote').value = '';
+    renderNotes();
+}
+
+function renderNotes() {
+    const notes = JSON.parse(localStorage.getItem('acadgenie_notes') || '[]');
+    const el = document.getElementById('savedNotes');
+    if (!el) return;
+    if (!notes.length) {
+        el.innerHTML = `<div class="empty-state" style="padding:16px 8px">
+            <p style="font-size:.85rem">No notes yet</p>
+            <span>Saved notes stay on this device.</span>
+        </div>`;
+        return;
+    }
+    el.innerHTML = notes.map((n, i) => `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;
+                    padding:10px 12px;margin-bottom:8px;font-size:.78rem">
+            <div class="d-flex justify-content-between align-items-start">
+                <span>${n.text.replace(/</g,'&lt;')}</span>
+                <button onclick="deleteNote(${i})"
+                        style="border:none;background:none;color:var(--text-faint);
+                               cursor:pointer;font-size:.75rem">✕</button>
+            </div>
+            <div style="color:var(--text-faint);font-size:.68rem;margin-top:3px">${n.ts}</div>
+        </div>`).join('');
+}
+
+function deleteNote(i) {
+    const notes = JSON.parse(localStorage.getItem('acadgenie_notes') || '[]');
+    notes.splice(i, 1);
+    localStorage.setItem('acadgenie_notes', JSON.stringify(notes));
+    renderNotes();
+}
+
+renderNotes();
+
+document.querySelectorAll('.chart-wrap').forEach(wrap => {
+    setTimeout(() => wrap.classList.add('is-ready'), 1600);
+});
+</script>
+{% endblock %}

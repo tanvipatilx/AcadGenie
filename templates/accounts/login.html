@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Login – AcadGenie{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-sm-10 col-md-6 col-lg-4">
+    <div class="card shadow-sm mt-5">
+      <div class="card-body p-4">
+        <h4 class="mb-4 text-center">Sign In</h4>
+
+        {% if error %}
+          <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" autofocus required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+
+        <div class="text-center mt-3 small">
+          Don't have an account? <a href="{% url 'register_html' %}">Register</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
