@@ -16,10 +16,11 @@ Built as a B.Tech Project-1 at Medicaps University, Indore.
 
 ## How it works
 
-SGPA = Σ (grade point × credits) / Σ credits
-CGPA = Σ (SGPA × semester credits) / Σ credits of completed semesters
-Required SGPA = (target CGPA × total credits − points earned) / remaining credits
-Grade scale (10-point):
+- SGPA = Σ (grade point × credits) / Σ credits
+- CGPA = Σ (SGPA × semester credits) / Σ credits of completed semesters
+- Required SGPA = (target CGPA × total credits − points earned) / remaining credits
+  
+### Grade scale (10-point):
 
 Percentage	       Grade	      Grade point
 90 and above	       O	            10
@@ -32,7 +33,7 @@ Below 40	           F	             0
 
 ## Tech stack
 
-Python, Django, Django REST Framework, SimpleJWT, SQLite, Bootstrap, Chart.js
+Python , Django, Django REST Framework, SimpleJWT, SQLite, Bootstrap, Chart.js
 
 ## Project structure
 
