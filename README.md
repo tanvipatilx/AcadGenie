@@ -1,8 +1,9 @@
 # AcadGenie: Intelligent Academic Companion
-### A Django web platform where college students record their marks, get SGPA and CGPA calculated automatically, track performance on a dashboard, and plan the SGPA they need to reach a target CGPA.
+A Django web platform where college students record their marks, get SGPA and CGPA calculated automatically, track performance on a dashboard, and plan the SGPA they need to reach a target CGPA.
 Built as a B.Tech Project-1 at Medicaps University, Indore.
 
 ## Features
+
 - Student registration and login (JWT for the API)
 - Student profile with enrollment number, branch, current semester and target CGPA
 - Semester and subject management with credits
@@ -14,6 +15,7 @@ Built as a B.Tech Project-1 at Medicaps University, Indore.
 - Every user sees only their own data
 
 ## How it works
+
 SGPA = Σ (grade point × credits) / Σ credits
 CGPA = Σ (SGPA × semester credits) / Σ credits of completed semesters
 Required SGPA = (target CGPA × total credits − points earned) / remaining credits
@@ -29,51 +31,61 @@ Percentage	       Grade	      Grade point
 Below 40	           F	             0
 
 ## Tech stack
+
 Python, Django, Django REST Framework, SimpleJWT, SQLite, Bootstrap, Chart.js
 
 ## Project structure
+
+```text
 acadgenie/
-├── config/       settings and URL routing
-├── accounts/     registration, login, profile
-├── academics/    semesters, subjects, marks, services.py (grading and GPA logic)
-├── dashboard/    views, templates, charts
-├── templates/    base.html and shared pages
+│
+├── config/                 # Settings and URL routing
+│
+├── accounts/               # Registration, login, profile
+│
+├── academics/              # Semesters, subjects, marks
+│   └── services.py         # Grading and GPA logic
+│
+├── dashboard/              # Views, templates, charts
+│
+├── templates/               # Base template and shared pages
+│   └── base.html
+│
 └── manage.py
+```
 
 ## Setup
-1. Clone the repository
 
-'''
+1. Clone the repository
+```
 git clone https://github.com/tanvipatilx/AcadGenie.git
 cd AcadGenie
-'''
+```
 
 2. Create and activate a virtual environment
-
-'''
+```
 python -m venv venv
 venv\Scripts\activate        # Windows
 source venv/bin/activate     # macOS / Linux
-'''
+```
 
 3. Install dependencies
-'''
+```
 pip install -r requirements.txt
-'''
+```
 
 4. Create a .env file in the project root 
-
-'''
+```
 SECRET_KEY=your-secret-key
 DEBUG=True
-'''
+```
 
 5. Set up the database and run the server
-'''
+```
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
-'''
+```
 
 6. Open http://127.0.0.1:8000/
 
