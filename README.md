@@ -22,14 +22,17 @@ Built as a B.Tech Project-1 at Medicaps University, Indore.
   
 ### Grade scale (10-point):
 
-Percentage	       Grade	      Grade point
-90 and above	       O	            10
-80 to below 90	     A+	             9
-70 to below 80	     A	             8 
-60 to below 70	     B+	             7
-50 to below 60	     B	             6
-40 to below 50	     C	             5
-Below 40	           F	             0
+| Percentage       | Grade | Grade Point |
+|------------------|:-----:|:-----------:|
+| 90 and above     | O     | 10          |
+| 80 to below 90   | A+    | 9           |
+| 70 to below 80   | A     | 8           |
+| 60 to below 70   | B+    | 7           |
+| 50 to below 60   | B     | 6           |
+| 40 to below 50   | C     | 5           |
+| Below 40         | F     | 0           |
+
+
 
 ## Tech stack
 
