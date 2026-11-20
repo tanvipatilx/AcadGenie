@@ -94,7 +94,7 @@ python manage.py runserver
 6. Open http://127.0.0.1:8000/
 
 ### Author
-Tanvi Patil (EN23CS3011077) 
-B.Tech Computer Science & Engineering 
-Medicaps University, Indore
 
+Tanvi Patil (EN23CS3011077)  
+B.Tech Computer Science & Engineering  
+Medicaps University, Indore
